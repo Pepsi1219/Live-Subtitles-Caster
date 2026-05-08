@@ -1,30 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-document.addEventListener('gesturestart', function (e) {
-    e.preventDefault();
-});
-  
+    // --- 1. จัดการ Speech & Elements ---
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
         alert('เบราว์เซอร์ไม่รองรับ Web Speech API');
         return;
     }
 
-    // ----------------------------------------------------------------
-    //  ฟังก์ชันช่วยตรวจสอบ Element (ป้องกัน Error properties of null)
-    // ----------------------------------------------------------------
-    const safeAddEventListener = (id, event, callback) => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener(event, callback);
-            return el;
-        }
-        return null;
-    };
-
-    // ----------------------------------------------------------------
-    //  DOM Elements & State
-    // ----------------------------------------------------------------
     const pageSetup      = document.getElementById('page-setup');
     const pageApp        = document.getElementById('page-app');
     const statusEl       = document.getElementById('status-indicator');
@@ -35,71 +17,111 @@ document.addEventListener('gesturestart', function (e) {
     const sourceText     = document.getElementById('source-text');
     const translatedText = document.getElementById('translated-text');
 
-    let isListening          = false;
+    let isListening = false;
     let isRecognitionRunning = false;
-    let isLightMode          = false;
-    let hideTimer            = null;
-    let abortController      = null;
+    let isLightMode = false;
+    let hideTimer = null;
+    let abortController = null;
 
-    // ----------------------------------------------------------------
-    //  จัดการปุ่มต่างๆ แบบปลอดภัย (Safe Handling)
-    // ----------------------------------------------------------------
+    // --- 2. ระบบ Drag & Drop (แก้ไขใหม่ให้รองรับทั้งเมาส์และมือถือ) ---
+    function makeDraggable(element) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
 
-    // ปุ่มสลับหน้า (Setup -> App)
-    safeAddEventListener('btn-enter-app', 'click', () => {
-        if (pageSetup && pageApp) {
-            pageSetup.classList.remove('active');
-            pageSetup.classList.add('hidden');
-            pageApp.classList.remove('hidden');
-            pageApp.classList.add('active');
-        }
-    });
+        // รองรับทั้งเมาส์และนิ้วสัมผัส
+        element.onmousedown = dragStart;
+        element.ontouchstart = dragStart;
 
-    // ปุ่ม Save Email
-    safeAddEventListener('btn-save-key', 'click', () => {
-        if (apiKeyInput && apiKeyStatus) {
-            const key = apiKeyInput.value.trim();
-            if (!key) {
-                apiKeyStatus.style.color = 'var(--accent-red)';
-                apiKeyStatus.textContent = '✗ กรุณากรอก Email';
-                return;
+        function dragStart(e) {
+            // ถ้าคลิกโดนปุ่ม หรือ select ไม่ต้องลาก
+            if (e.target.closest('button') || e.target.closest('select') || e.target.closest('input')) return;
+
+            // ตรวจสอบว่าเป็น Event ของเมาส์หรือนิ้ว
+            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+
+            pos3 = clientX;
+            pos4 = clientY;
+
+            if (e.type === 'mousedown') {
+                document.onmouseup = dragEnd;
+                document.onmousemove = dragMove;
+            } else {
+                document.ontouchend = dragEnd;
+                document.ontouchmove = dragMove;
             }
-            localStorage.setItem('claude_api_key', key);
-            apiKeyStatus.style.color = 'var(--accent)';
-            apiKeyStatus.textContent = '✓ Saved!';
         }
-    });
 
-    // ปุ่ม Theme (รองรับทั้ง 2 หน้า)
-    const themeButtons = document.querySelectorAll('.btn-theme');
-    themeButtons.forEach(btn => {
+        function dragMove(e) {
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+
+            pos1 = pos3 - clientX;
+            pos2 = pos4 - clientY;
+            pos3 = clientX;
+            pos4 = clientY;
+
+            // ปรับตำแหน่งใหม่
+            element.style.top = (element.offsetTop - pos2) + "px";
+            element.style.left = (element.offsetLeft - pos1) + "px";
+        }
+
+        function dragEnd() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+            document.ontouchend = null;
+            document.ontouchmove = null;
+        }
+    }
+
+    // --- 3. สั่งให้กล่องเริ่มลากได้ (ต้องอยู่ใน DOMContentLoaded) ---
+    const sourceBox = document.getElementById('source-container');
+    const translatedBox = document.getElementById('translated-container');
+
+    if (sourceBox) makeDraggable(sourceBox);
+    if (translatedBox) makeDraggable(translatedBox);
+
+    // --- 4. ปุ่มสลับหน้า และ Event อื่นๆ ---
+    const btnEnterApp = document.getElementById('btn-enter-app');
+    if (btnEnterApp) {
+        btnEnterApp.addEventListener('click', () => {
+            pageSetup.classList.replace('active', 'hidden');
+            pageApp.classList.replace('hidden', 'active');
+        });
+    }
+
+    const btnSaveKey = document.getElementById('btn-save-key');
+    if (btnSaveKey) {
+        btnSaveKey.addEventListener('click', () => {
+            const key = apiKeyInput.value.trim();
+            localStorage.setItem('claude_api_key', key);
+            apiKeyStatus.textContent = '✓ Saved!';
+        });
+    }
+
+    // ปุ่ม Theme
+    document.querySelectorAll('.btn-theme').forEach(btn => {
         btn.addEventListener('click', () => {
             isLightMode = !isLightMode;
             document.body.classList.toggle('light-mode', isLightMode);
-            const icon = isLightMode ? 'fa-moon' : 'fa-sun';
-            themeButtons.forEach(b => {
-                b.innerHTML = `<i class="fa-solid ${icon}"></i>`;
-            });
         });
     });
 
     // ปุ่มไมค์
-    const btnMic = safeAddEventListener('btn-mic', 'click', () => {
-        if (isListening) {
-            stopRecognition();
-            if (btnMic) btnMic.innerHTML = '<i class="fa-solid fa-microphone-slash"></i>';
-            setStatus('READY', 'var(--accent)');
-        } else {
-            isListening = true;
-            startRecognition();
-            if (btnMic) btnMic.innerHTML = '<i class="fa-solid fa-microphone"></i>';
-            setStatus('LISTENING...', 'var(--accent-red)');
-        }
-    });
+    const btnMic = document.getElementById('btn-mic');
+    if (btnMic) {
+        btnMic.addEventListener('click', () => {
+            if (isListening) {
+                stopRecognition();
+                btnMic.innerHTML = '<i class="fa-solid fa-microphone-slash"></i>';
+            } else {
+                isListening = true;
+                startRecognition();
+                btnMic.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+            }
+        });
+    }
 
-    // ----------------------------------------------------------------
-    //  Speech Recognition Logic
-    // ----------------------------------------------------------------
+    // --- 5. ระบบ Speech & Translation (คงเดิม) ---
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
@@ -107,32 +129,10 @@ document.addEventListener('gesturestart', function (e) {
     function startRecognition() {
         if (isRecognitionRunning) return;
         recognition.lang = sourceLang ? sourceLang.value : 'th-TH';
-        try {
-            recognition.start();
-            isRecognitionRunning = true;
-        } catch (e) { isRecognitionRunning = false; }
+        try { recognition.start(); isRecognitionRunning = true; } catch (e) { }
     }
 
-    function stopRecognition() {
-        isListening = false;
-        isRecognitionRunning = false;
-        recognition.stop();
-    }
-
-    function setStatus(text, color) {
-        if (statusEl) {
-            statusEl.textContent = text;
-            statusEl.parentElement.style.color = color;
-        }
-    }
-
-    // ----------------------------------------------------------------
-    //  Recognition Events & Translation
-    // ----------------------------------------------------------------
-    recognition.onend = () => {
-        isRecognitionRunning = false;
-        if (isListening) setTimeout(startRecognition, 300);
-    };
+    function stopRecognition() { isListening = false; recognition.stop(); }
 
     recognition.onresult = async (event) => {
         let interim = '';
@@ -141,56 +141,31 @@ document.addEventListener('gesturestart', function (e) {
             const t = event.results[i][0].transcript;
             event.results[i].isFinal ? (final += t) : (interim += t);
         }
-        const current = final || interim;
-        if (!current.trim()) return;
-
-        if (sourceText) {
-            sourceText.textContent = current;
-            sourceText.classList.add('show');
-        }
-
+        if (sourceText) sourceText.textContent = final || interim;
+        
         if (event.results[event.results.length - 1].isFinal && final.trim()) {
-            if (abortController) abortController.abort();
-            clearTimeout(hideTimer);
-
-            if (translatedText) {
-                translatedText.textContent = '…';
-                translatedText.classList.add('show');
-            }
-
             const result = await translateWithMyMemory(final);
-            if (result && translatedText) {
-                translatedText.textContent = result;
-                hideTimer = setTimeout(() => {
-                    if (sourceText) sourceText.classList.remove('show');
-                    if (translatedText) translatedText.classList.remove('show');
-                }, 6000);
-            }
+            if (translatedText) translatedText.textContent = result;
         }
     };
 
     async function translateWithMyMemory(text) {
         const email = localStorage.getItem('claude_api_key') || "";
-        const s = sourceLang ? sourceLang.value.split('-')[0] : 'th';
-        const t = targetLang ? targetLang.value.split('-')[0] : 'en';
-        const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${s}|${t}${email ? '&de=' + email : ''}`;
-
-        abortController = new AbortController();
+        const s = sourceLang.value.split('-')[0];
+        const t = targetLang.value.split('-')[0];
+        const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${s}|${t}${email ? '&de='+email : ''}`;
         try {
-            const res = await fetch(apiUrl, { signal: abortController.signal });
+            const res = await fetch(apiUrl);
             const data = await res.json();
             return data.responseData.translatedText;
         } catch (err) { return text; }
     }
-
-    // Load initial data
-    const savedKey = localStorage.getItem('claude_api_key');
-    if (savedKey && apiKeyInput) {
-        apiKeyInput.value = savedKey;
-        if (apiKeyStatus) apiKeyStatus.textContent = '✓ Email loaded';
-    }
 });
 
+
+// --- เรียกใช้งาน (ใส่ไว้ใน DOMContentLoaded) ---
+// makeDraggable(document.getElementById('source-container'));
+// makeDraggable(document.getElementById('translated-container'));
   
   // ----------------------------------------------------------------
     //  Claude API Translation

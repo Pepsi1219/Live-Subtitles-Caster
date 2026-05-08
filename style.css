@@ -233,36 +233,23 @@ body {
    Subtitle Area
 ============================================================ */
 #subtitle-area {
+    position: relative;
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 32px;
-    text-align: center;
-    user-select: none;
-    pointer-events: none;
+    width: 100%;
+    height: 100vh;
+    pointer-events: auto; /* เปลี่ยนจาก none เป็น auto */
+    overflow: hidden;
 }
 
-#source-text {
-    font-size: 20px;
-    color: var(--subtitle-source);
-    margin-bottom: 10px;
-    opacity: 0;
-    transition: opacity 0.3s;
-    min-height: 1.4em;
+#source-text, #translated-text {
+    opacity: 1 !important; /* ให้เห็นตลอด */
+    margin: 0;
+    padding: 5px;
+    text-align: left;
+    word-wrap: break-word;
 }
-
-#translated-text {
-    font-size: 44px;
-    font-weight: 700;
-    color: var(--subtitle-main);
-    text-shadow: var(--subtitle-shadow);
-    opacity: 0;
-    transition: opacity 0.3s;
-    min-height: 1.3em;
-    line-height: 1.2;
-}
+#source-text { font-size: 18px; color: var(--text-dim); }
+#translated-text { font-size: 24px; font-weight: bold; color: var(--text); }
 
 /* class ที่ JS ใช้เพื่อ fade-in ข้อความ */
 .show {
@@ -369,4 +356,63 @@ button {
     -webkit-user-select: none;
     user-select: none;
     -webkit-tap-highlight-color: transparent; /* ลบสีฟ้าๆ เวลาแตะปุ่มบน Android/iOS */
+}
+
+
+/* subtitle area */
+#subtitle-area {
+    position: relative; /* เป็นพื้นที่ให้กล่องลอยอยู่ภายใน */
+    height: 85vh;
+    width: 100%;
+}
+
+.subtitle-box {
+    position: absolute; /* สำคัญมาก */
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 10px;
+    min-width: 250px;
+    min-height: 80px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    z-index: 100;
+    cursor: default; /* ให้เมาส์ปกติ */
+    touch-action: none;
+    resize: both;
+    overflow: hidden;
+    cursor: move;
+    touch-action: none; /* สำหรับมือถือ */
+}
+
+
+/* ตั้งตำแหน่งเริ่มต้นให้คนละที่ ไม่ให้ทับกัน */
+#translated-container {
+    top: 250px;
+    left: 50px;
+}
+
+/* เมื่อสั่งปิด (Hidden) ให้หดเหลือแค่แถบหัวข้อ */
+.subtitle-box.hidden {
+    height: 45px !important;
+    min-height: 45px;
+    overflow: hidden;
+    resize: none; /* ปิดการยืดตอนที่พับอยู่ */
+}
+
+#source-container { top: 100px; left: 50px; }
+#translated-container { top: 300px; left: 50px; }
+
+/* ส่วนหัวกล่องสำหรับลาก */
+.drag-handle {
+    padding: 5px;
+    margin-bottom: 5px;
+    background: var(--btn-hover-bg);
+    border-radius: 6px;
+    cursor: move; /* เป็นรูปมือสำหรับลาก */
+    font-size: 10px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    user-select: none;
 }

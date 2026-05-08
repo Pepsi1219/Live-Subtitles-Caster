@@ -9,63 +9,70 @@
 </head>
 <body>
 
-    <header id="main-header">
-        <div id="status-wrapper">
-            <i class="fa-solid fa-closed-captioning"></i>
-            <span id="status-indicator">READY</span>
-        </div>
-
-        <div id="btn-group">
-            <button id="btn-theme" title="สลับโหมดมืด/สว่าง">
-                <i class="fa-solid fa-sun"></i>
-            </button>
-            <button id="btn-mic" title="เปิด/ปิดไมค์">
-                <i class="fa-solid fa-microphone-slash"></i>
-            </button>
-            <button id="btn-obs" title="โหมด OBS (กด Esc เพื่อออก)">
-                <i class="fa-solid fa-clapperboard"></i>
-            </button>
-            <button id="btn-settings" title="ตั้งค่า">
-                <i class="fa-solid fa-gear"></i>
-            </button>
-        </div>
-    </header>
-
-    <div id="settings-panel" class="hidden">
-        <h3>Settings</h3>
-
-        <div class="setting-row">
-            <label for="source-lang">Spoken Language (พูด)</label>
-            <select id="source-lang">
-                <option value="th-TH">Thai (ไทย)</option>
-                <option value="en-US">English</option>
-                <option value="zh-CN">Chinese (จีน)</option>
-            </select>
-        </div>
-
-        <div class="setting-row">
-            <label for="target-lang">Subtitle Language (แปล)</label>
-            <select id="target-lang">
-                <option value="en">English</option>
-                <option value="th">Thai (ไทย)</option>
-                <option value="zh">Chinese (จีน)</option>
-            </select>
-        </div>
-
-        <div class="setting-row">
-            <label for="api-key-input">MyMemory Email</label>
-            <div id="api-key-wrapper">
-                <input type="password" id="api-key-input" placeholder="..." spellcheck="false">
-                <button id="btn-save-key">Save</button>
+    <div id="page-setup" class="page active">
+        <div class="setup-card">
+            <div class="setup-header">
+                <h2><i class="fa-solid fa-gear"></i> Settings</h2>
+                <button class="btn-theme icon-btn" title="สลับโหมดมืด/สว่าง">
+                    <i class="fa-solid fa-sun"></i>
+                </button>
             </div>
-            <span id="api-key-status"></span>
+
+            <div class="setting-row">
+                <label for="source-lang">Spoken Language (พูด)</label>
+                <select id="source-lang">
+                    <option value="th-TH">Thai (ไทย)</option>
+                    <option value="en-US">English</option>
+                    <option value="zh-CN">Chinese (จีน)</option>
+                </select>
+            </div>
+
+            <div class="setting-row">
+                <label for="target-lang">Subtitle Language (แปล)</label>
+                <select id="target-lang">
+                    <option value="en">English</option>
+                    <option value="th">Thai (ไทย)</option>
+                    <option value="zh">Chinese (จีน)</option>
+                </select>
+            </div>
+
+            <div class="setting-row">
+                <label for="api-key-input">MyMemory Email <span style="font-size: 10px; color: var(--text-dim);">(เพื่อปลดล็อกโควต้าฟรี)</span></label>
+                <div id="api-key-wrapper">
+                    <input type="text" id="api-key-input" placeholder="your_email@example.com" spellcheck="false">
+                    <button id="btn-save-key">Save</button>
+                </div>
+                <span id="api-key-status"></span>
+            </div>
+
+            <button id="btn-enter-app" class="btn-primary">
+                เข้าสู่หน้าแปลภาษา <i class="fa-solid fa-arrow-right"></i>
+            </button>
         </div>
     </div>
 
-    <main id="subtitle-area">
-        <p id="source-text"></p>
-        <p id="translated-text"></p>
-    </main>
+
+    <div id="page-app" class="page hidden">
+        <header id="main-header">
+            <div id="status-wrapper">
+                <i class="fa-solid fa-closed-captioning"></i>
+                <span id="status-indicator">READY</span>
+            </div>
+            <div id="btn-group">
+                <button class="btn-theme" title="สลับโหมดมืด/สว่าง">
+                    <i class="fa-solid fa-sun"></i>
+                </button>
+                <button id="btn-mic" title="เปิด/ปิดไมค์">
+                    <i class="fa-solid fa-microphone-slash"></i>
+                </button>
+            </div>
+        </header>
+
+        <main id="subtitle-area">
+            <p id="source-text"></p>
+            <p id="translated-text"></p>
+        </main>
+    </div>
 
     <script src="script.js"></script>
 </body>

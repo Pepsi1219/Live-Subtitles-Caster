@@ -1,5 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+document.addEventListener('gesturestart', function (e) {
+    e.preventDefault();
+});
+  
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
         alert('เบราว์เซอร์ไม่รองรับ Web Speech API');

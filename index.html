@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Subtitles Caster</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col font-sans transition-colors duration-300">
+
+    <header id="control-panel" class="bg-slate-800 p-4 shadow-md border-b border-slate-700 flex flex-wrap gap-4 items-center justify-between z-10">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-closed-captioning text-3xl text-emerald-400"></i>
+            <h1 class="text-xl font-bold">Live Subtitles</h1>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+                <label for="source-lang" class="text-sm text-slate-300">พูด:</label>
+                <select id="source-lang" class="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-emerald-500">
+                    <option value="th-TH">ไทย (Thai)</option>
+                    <option value="en-US">อังกฤษ (English)</option>
+                    <option value="zh-CN">จีน (Chinese)</option>
+                </select>
+            </div>
+
+            <i class="fa-solid fa-arrow-right text-slate-500"></i>
+
+            <div class="flex items-center gap-2">
+                <label for="target-lang" class="text-sm text-slate-300">แปล:</label>
+                <select id="target-lang" class="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-emerald-500">
+                    <option value="en">อังกฤษ (English)</option>
+                    <option value="th">ไทย (Thai)</option>
+                    <option value="zh">จีน (Chinese)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="flex gap-3">
+            <button id="toggle-mic-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-microphone"></i> <span id="btn-text">เริ่มฟังเสียง</span>
+            </button>
+            <button id="obs-mode-btn" class="bg-slate-700 hover:bg-slate-600 border border-slate-500 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2" title="เข้าโหมด Green Screen สำหรับ OBS">
+                <i class="fa-solid fa-desktop"></i> OBS Mode
+            </button>
+        </div>
+    </header>
+
+    <main id="subtitle-container" class="flex-1 flex flex-col justify-end p-8 pb-16 relative overflow-hidden">
+        <div id="source-text" class="text-2xl text-slate-400 mb-2 font-medium subtitle-text text-center opacity-0 transition-opacity duration-300">
+            ...
+        </div>
+        <div id="translated-text" class="text-5xl md:text-6xl text-white font-bold text-center subtitle-text subtitle-stroke tracking-wide opacity-0 transition-opacity duration-300 drop-shadow-2xl">
+            พร้อมใช้งาน กดเริ่มฟังเสียงได้เลย
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

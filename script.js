@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             showText(translatedText, '…');
 
-            const result = await translateWithClaude(final);
+            const result = await translateWithMyMemory(final);
             if (result !== null) {
                 showText(translatedText, result);
                 // ซ่อนซับไตเติลหลัง 6 วินาที
@@ -214,11 +214,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ----------------------------------------------------------------
-    //  Claude API Translation
+    //  MyMemory API Translation
     // ----------------------------------------------------------------
     const LANG_NAMES = { th: 'Thai', en: 'English', zh: 'Chinese (Simplified)' };
 
-    async function translateWithClaude(text) {
+
+        async function translateWithMyMemory(text) {
+            // ดึงอีเมลที่บันทึกไว้
+            const email = localStorage.getItem('claude_api_key'); 
+            
+            // ตัดรหัสภาษาให้เหลือแค่ 2 ตัว เช่น th-TH เหลือ th
+            const sLangCode = sourceLang.value.split('-')[0];
+            const tLangCode = targetLang.value.split('-')[0];
+    
+            let apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sLangCode}|${tLangCode}`;
+    
+            if (email && email.includes('@')) {
+                apiUrl += `&de=${encodeURIComponent(email)}`;
+            }
+    
+            abortController = new AbortController();
+    
+            try {
+                const res = await fetch(apiUrl, { signal:
+                  abortController.signal });
+                
+                if (!res.ok) {
+                    console.error('API error:', res.status);
+                    return text; 
+                }
+    
+                const data = await res.json();
+                
+                if (data.responseStatus === 403) {
+                    console.warn("MyMemory Quota Exceeded:",
+                                 data.responseData.translatedText);
+                    return `[โควต้าเต็ม] ${text}`;
+                }
+    
+                return data.responseData.translatedText;
+    
+            } catch (err) {
+                if (err.name === 'AbortError') return null;
+                console.error('Fetch error:', err);
+                return text;
+            } finally {
+                abortController = null;
+            }
+        }
+    
+    });
+
+  
+  // ----------------------------------------------------------------
+    //  Claude API Translation
+    // ----------------------------------------------------------------
+
+    /* async function translateWithClaude(text) {
         const apiKey = localStorage.getItem('claude_api_key');
         if (!apiKey) {
             // ยังไม่ได้ใส่ Key — แสดงข้อความต้นฉบับแทน
@@ -266,4 +318,6 @@ Return ONLY the translated text. No explanations. No quotes. Keep it short and n
         }
     }
 
-});
+});*/
+
+

@@ -1,0 +1,43 @@
+/* พื้นฐาน */
+body {
+    margin: 0;
+    overflow: hidden; /* ป้องกันแถบเลื่อน (Scrollbar) โผล่ตอนขึ้นซับ */
+}
+
+/* โหมด OBS / นำเสนอ */
+.obs-mode {
+    background-color: #00FF00 !important; /* เปลี่ยนพื้นหลังเป็นสีเขียวเจาะทะลุ */
+}
+
+.obs-mode #control-panel {
+    display: none !important; /* ซ่อนแผงควบคุมทั้งหมด */
+}
+
+.obs-mode #subtitle-container {
+    padding-bottom: 2rem;
+}
+
+/* การตกแต่งตัวอักษรซับไตเติล */
+.subtitle-text {
+    line-height: 1.4;
+    max-width: 90%;
+    margin: 0 auto;
+    /* แอนิเมชันการเด้งขึ้นมาของข้อความ */
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.subtitle-text.show {
+    opacity: 1 !important;
+    transform: translateY(0);
+}
+
+/* การทำขอบดำ (Stroke) ให้ตัวหนังสือ เพื่อให้อ่านง่ายบนทุกพื้นหลังของ PowerPoint */
+.subtitle-stroke {
+    text-shadow: 
+        -2px -2px 0 #000,  
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000,
+         0px  4px 10px rgba(0,0,0,0.8); /* เพิ่มเงาฟุ้งๆ ให้ดูมีมิติ */
+}

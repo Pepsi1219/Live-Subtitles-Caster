@@ -1,43 +1,282 @@
-/* พื้นฐาน */
-body {
+/* ============================================================
+   CSS Variables — Dark Mode (default)
+   อยากเปลี่ยนสีทั้งแอป แก้ที่นี่ที่เดียว
+============================================================ */
+:root {
+    --bg:               #18181b;
+    --text:             #f4f4f5;
+    --text-dim:         #a1a1aa;
+
+    --btn-color:        #a1a1aa;
+    --btn-hover-bg:     #3f3f46;
+    --btn-hover-color:  #f4f4f5;
+
+    --panel-bg:         #27272a;
+    --panel-border:     #3f3f46;
+
+    --input-bg:         #18181b;
+    --input-border:     #52525b;
+    --input-color:      #f4f4f5;
+
+    --accent:           #10b981;
+    --accent-red:       #f43f5e;
+
+    --subtitle-source:  #a1a1aa;
+    --subtitle-main:    #ffffff;
+    --subtitle-shadow:  0 2px 12px rgba(0, 0, 0, 0.85);
+}
+
+/* ============================================================
+   Light Mode — override ตัวแปรเท่านั้น
+============================================================ */
+body.light-mode {
+    --bg:               #f4f4f5;
+    --text:             #18181b;
+    --text-dim:         #71717a;
+
+    --btn-color:        #71717a;
+    --btn-hover-bg:     #e4e4e7;
+    --btn-hover-color:  #18181b;
+
+    --panel-bg:         #ffffff;
+    --panel-border:     #d4d4d8;
+
+    --input-bg:         #fafafa;
+    --input-border:     #d4d4d8;
+    --input-color:      #18181b;
+
+    --subtitle-source:  #52525b;
+    --subtitle-main:    #18181b;
+    --subtitle-shadow:  0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================================
+   Reset & Base
+============================================================ */
+*, *::before, *::after {
+    box-sizing: border-box;
     margin: 0;
-    overflow: hidden; /* ป้องกันแถบเลื่อน (Scrollbar) โผล่ตอนขึ้นซับ */
+    padding: 0;
 }
 
-/* โหมด OBS / นำเสนอ */
-.obs-mode {
-    background-color: #00FF00 !important; /* เปลี่ยนพื้นหลังเป็นสีเขียวเจาะทะลุ */
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: background-color 0.3s, color 0.3s;
 }
 
-.obs-mode #control-panel {
-    display: none !important; /* ซ่อนแผงควบคุมทั้งหมด */
+/* ============================================================
+   Header
+============================================================ */
+#main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    position: relative;
+    z-index: 10;
+    transition: opacity 0.3s;
 }
 
-.obs-mode #subtitle-container {
-    padding-bottom: 2rem;
+#status-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    user-select: none;
 }
 
-/* การตกแต่งตัวอักษรซับไตเติล */
-.subtitle-text {
-    line-height: 1.4;
-    max-width: 90%;
-    margin: 0 auto;
-    /* แอนิเมชันการเด้งขึ้นมาของข้อความ */
-    transform: translateY(10px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
+/* ============================================================
+   Buttons
+============================================================ */
+#btn-group {
+    display: flex;
+    gap: 4px;
+    position: relative;
+    z-index: 20;
 }
 
-.subtitle-text.show {
+#btn-group button {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--btn-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 17px;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+#btn-group button:hover {
+    background-color: var(--btn-hover-bg);
+    color: var(--btn-hover-color);
+}
+
+/* ปุ่มไมค์ตอนเปิดใช้งาน */
+#btn-mic.active {
+    color: var(--accent-red);
+}
+
+/* ============================================================
+   Settings Panel
+============================================================ */
+#settings-panel {
+    position: absolute;
+    top: 62px;
+    right: 16px;
+    z-index: 50;
+    width: 260px;
+    background-color: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+#settings-panel.hidden {
+    display: none;
+}
+
+#settings-panel h3 {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--panel-border);
+}
+
+.setting-row {
+    margin-bottom: 14px;
+}
+
+.setting-row:last-child {
+    margin-bottom: 0;
+}
+
+.setting-row label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+}
+
+.setting-row select,
+.setting-row input[type="password"] {
+    width: 100%;
+    background-color: var(--input-bg);
+    color: var(--input-color);
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.setting-row select:focus,
+.setting-row input[type="password"]:focus {
+    border-color: var(--accent);
+}
+
+/* API Key row — input + save button ข้างกัน */
+#api-key-wrapper {
+    display: flex;
+    gap: 6px;
+}
+
+#api-key-wrapper input {
+    flex: 1;
+}
+
+#btn-save-key {
+    background-color: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+}
+
+#btn-save-key:hover {
+    opacity: 0.85;
+}
+
+#api-key-status {
+    display: block;
+    font-size: 11px;
+    margin-top: 5px;
+    color: var(--accent);
+    min-height: 16px;
+}
+
+/* ============================================================
+   Subtitle Area
+============================================================ */
+#subtitle-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    text-align: center;
+    user-select: none;
+    pointer-events: none;
+}
+
+#source-text {
+    font-size: 20px;
+    color: var(--subtitle-source);
+    margin-bottom: 10px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    min-height: 1.4em;
+}
+
+#translated-text {
+    font-size: 44px;
+    font-weight: 700;
+    color: var(--subtitle-main);
+    text-shadow: var(--subtitle-shadow);
+    opacity: 0;
+    transition: opacity 0.3s;
+    min-height: 1.3em;
+    line-height: 1.2;
+}
+
+/* class ที่ JS ใช้เพื่อ fade-in ข้อความ */
+.show {
     opacity: 1 !important;
-    transform: translateY(0);
 }
 
-/* การทำขอบดำ (Stroke) ให้ตัวหนังสือ เพื่อให้อ่านง่ายบนทุกพื้นหลังของ PowerPoint */
-.subtitle-stroke {
-    text-shadow: 
-        -2px -2px 0 #000,  
-         2px -2px 0 #000,
-        -2px  2px 0 #000,
-         2px  2px 0 #000,
-         0px  4px 10px rgba(0,0,0,0.8); /* เพิ่มเงาฟุ้งๆ ให้ดูมีมิติ */
+/* ============================================================
+   OBS / Chroma Key Mode
+============================================================ */
+body.obs-mode {
+    background-color: #00FF00 !important;
+}
+
+body.obs-mode #main-header {
+    opacity: 0;
+    pointer-events: none;
 }

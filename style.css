@@ -270,18 +270,6 @@ body {
 }
 
 /* ============================================================
-   OBS / Chroma Key Mode
-============================================================ */
-body.obs-mode {
-    background-color: #00FF00 !important;
-}
-
-body.obs-mode #main-header {
-    opacity: 0;
-    pointer-events: none;
-}
-
-/* ============================================================
    Page Routing (ระบบสลับหน้า)
 ============================================================ */
 .page {
@@ -366,4 +354,19 @@ body.obs-mode #main-header {
 
 .btn-primary:hover {
     opacity: 0.9;
+}
+
+/* ป้องกันการซูมเมื่อกดย้ำๆ และทำให้ปุ่มตอบสนองเร็วขึ้นบนมือถือ */
+button, 
+select, 
+input, 
+.setup-card {
+    touch-action: manipulation;
+}
+
+/* แถม: ป้องกันการเลือกข้อความเวลาเราเผลอกดค้างที่ปุ่ม */
+button {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent; /* ลบสีฟ้าๆ เวลาแตะปุ่มบน Android/iOS */
 }

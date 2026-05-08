@@ -1,34 +1,36 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // ----------------------------------------------------------------
-    //  ตรวจสอบ browser รองรับ Speech Recognition ไหม
-    // ----------------------------------------------------------------
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-        alert('เบราว์เซอร์ไม่รองรับ Web Speech API\nแนะนำให้ใช้ Google Chrome หรือ Edge ครับ');
+        alert('เบราว์เซอร์ไม่รองรับ Web Speech API');
         return;
     }
 
     // ----------------------------------------------------------------
-    //  DOM Elements
+    //  ฟังก์ชันช่วยตรวจสอบ Element (ป้องกัน Error properties of null)
     // ----------------------------------------------------------------
-    const btnTheme       = document.getElementById('btn-theme');
-    const btnMic         = document.getElementById('btn-mic');
-    const btnObs         = document.getElementById('btn-obs');
-    const btnSettings    = document.getElementById('btn-settings');
-    const settingsPanel  = document.getElementById('settings-panel');
+    const safeAddEventListener = (id, event, callback) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener(event, callback);
+            return el;
+        }
+        return null;
+    };
+
+    // ----------------------------------------------------------------
+    //  DOM Elements & State
+    // ----------------------------------------------------------------
+    const pageSetup      = document.getElementById('page-setup');
+    const pageApp        = document.getElementById('page-app');
     const statusEl       = document.getElementById('status-indicator');
     const sourceLang     = document.getElementById('source-lang');
     const targetLang     = document.getElementById('target-lang');
     const apiKeyInput    = document.getElementById('api-key-input');
-    const btnSaveKey     = document.getElementById('btn-save-key');
     const apiKeyStatus   = document.getElementById('api-key-status');
     const sourceText     = document.getElementById('source-text');
     const translatedText = document.getElementById('translated-text');
 
-    // ----------------------------------------------------------------
-    //  State
-    // ----------------------------------------------------------------
     let isListening          = false;
     let isRecognitionRunning = false;
     let isLightMode          = false;
@@ -36,234 +38,154 @@ document.addEventListener('DOMContentLoaded', () => {
     let abortController      = null;
 
     // ----------------------------------------------------------------
-    //  Load saved API Key จาก localStorage
+    //  จัดการปุ่มต่างๆ แบบปลอดภัย (Safe Handling)
     // ----------------------------------------------------------------
-    const savedKey = localStorage.getItem('claude_api_key');
-    if (savedKey) {
-        apiKeyInput.value = savedKey;
-        apiKeyStatus.textContent = '✓ Key saved';
-    }
 
-    // ----------------------------------------------------------------
-    //  Save API Key
-    // ----------------------------------------------------------------
-    btnSaveKey.addEventListener('click', () => {
-        const key = apiKeyInput.value.trim();
-        if (!key) {
-            apiKeyStatus.style.color = 'var(--accent-red)';
-            apiKeyStatus.textContent = '✗ กรุณากรอก Key';
-            return;
-        }
-        localStorage.setItem('claude_api_key', key);
-        apiKeyStatus.style.color = 'var(--accent)';
-        apiKeyStatus.textContent = '✓ Saved!';
-    });
-
-    // ----------------------------------------------------------------
-    //  Theme Toggle (Dark / Light)
-    // ----------------------------------------------------------------
-    btnTheme.addEventListener('click', () => {
-        isLightMode = !isLightMode;
-        document.body.classList.toggle('light-mode', isLightMode);
-        btnTheme.innerHTML = isLightMode
-            ? '<i class="fa-solid fa-moon"></i>'
-            : '<i class="fa-solid fa-sun"></i>';
-    });
-
-    // ----------------------------------------------------------------
-    //  Settings Panel (toggle + ปิดเมื่อคลิกข้างนอก)
-    // ----------------------------------------------------------------
-    btnSettings.addEventListener('click', (e) => {
-        e.stopPropagation();
-        settingsPanel.classList.toggle('hidden');
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!settingsPanel.contains(e.target) && e.target !== btnSettings) {
-            settingsPanel.classList.add('hidden');
+    // ปุ่มสลับหน้า (Setup -> App)
+    safeAddEventListener('btn-enter-app', 'click', () => {
+        if (pageSetup && pageApp) {
+            pageSetup.classList.remove('active');
+            pageSetup.classList.add('hidden');
+            pageApp.classList.remove('hidden');
+            pageApp.classList.add('active');
         }
     });
 
-    // ----------------------------------------------------------------
-    //  OBS Mode (พื้นหลังเขียว)
-    // ----------------------------------------------------------------
-    btnObs.addEventListener('click', () => {
-        document.body.classList.toggle('obs-mode');
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') document.body.classList.remove('obs-mode');
-    });
-
-    // ----------------------------------------------------------------
-    //  Speech Recognition Setup
-    // ----------------------------------------------------------------
-    const recognition        = new SpeechRecognition();
-    recognition.continuous   = true;
-    recognition.interimResults = true;
-
-    function startRecognition() {
-        if (isRecognitionRunning) return;
-        recognition.lang = sourceLang.value;
-        try {
-            recognition.start();
-            isRecognitionRunning = true;
-        } catch (e) {
-            isRecognitionRunning = false;
+    // ปุ่ม Save Email
+    safeAddEventListener('btn-save-key', 'click', () => {
+        if (apiKeyInput && apiKeyStatus) {
+            const key = apiKeyInput.value.trim();
+            if (!key) {
+                apiKeyStatus.style.color = 'var(--accent-red)';
+                apiKeyStatus.textContent = '✗ กรุณากรอก Email';
+                return;
+            }
+            localStorage.setItem('claude_api_key', key);
+            apiKeyStatus.style.color = 'var(--accent)';
+            apiKeyStatus.textContent = '✓ Saved!';
         }
-    }
+    });
 
-    function stopRecognition() {
-        isListening          = false;
-        isRecognitionRunning = false;
-        recognition.stop();
-    }
+    // ปุ่ม Theme (รองรับทั้ง 2 หน้า)
+    const themeButtons = document.querySelectorAll('.btn-theme');
+    themeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            isLightMode = !isLightMode;
+            document.body.classList.toggle('light-mode', isLightMode);
+            const icon = isLightMode ? 'fa-moon' : 'fa-sun';
+            themeButtons.forEach(b => {
+                b.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+            });
+        });
+    });
 
-    // ----------------------------------------------------------------
-    //  Mic Button
-    // ----------------------------------------------------------------
-    btnMic.addEventListener('click', () => {
+    // ปุ่มไมค์
+    const btnMic = safeAddEventListener('btn-mic', 'click', () => {
         if (isListening) {
             stopRecognition();
-            btnMic.classList.remove('active');
-            btnMic.innerHTML = '<i class="fa-solid fa-microphone-slash"></i>';
+            if (btnMic) btnMic.innerHTML = '<i class="fa-solid fa-microphone-slash"></i>';
             setStatus('READY', 'var(--accent)');
         } else {
             isListening = true;
             startRecognition();
-            btnMic.classList.add('active');
-            btnMic.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+            if (btnMic) btnMic.innerHTML = '<i class="fa-solid fa-microphone"></i>';
             setStatus('LISTENING...', 'var(--accent-red)');
         }
     });
 
+    // ----------------------------------------------------------------
+    //  Speech Recognition Logic
+    // ----------------------------------------------------------------
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    function startRecognition() {
+        if (isRecognitionRunning) return;
+        recognition.lang = sourceLang ? sourceLang.value : 'th-TH';
+        try {
+            recognition.start();
+            isRecognitionRunning = true;
+        } catch (e) { isRecognitionRunning = false; }
+    }
+
+    function stopRecognition() {
+        isListening = false;
+        isRecognitionRunning = false;
+        recognition.stop();
+    }
+
     function setStatus(text, color) {
-        statusEl.textContent = text;
-        statusEl.parentElement.style.color = color;
+        if (statusEl) {
+            statusEl.textContent = text;
+            statusEl.parentElement.style.color = color;
+        }
     }
 
     // ----------------------------------------------------------------
-    //  Recognition Events
+    //  Recognition Events & Translation
     // ----------------------------------------------------------------
-    recognition.onstart = () => { isRecognitionRunning = true; };
-
     recognition.onend = () => {
         isRecognitionRunning = false;
-        // restart อัตโนมัติถ้ายัง listening อยู่
         if (isListening) setTimeout(startRecognition, 300);
-    };
-
-    recognition.onerror = (e) => {
-        isRecognitionRunning = false;
-        if (e.error === 'no-speech' || e.error === 'aborted') return;
-        setStatus('ERR: ' + e.error.toUpperCase(), 'var(--accent-red)');
     };
 
     recognition.onresult = async (event) => {
         let interim = '';
-        let final   = '';
-
+        let final = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
             const t = event.results[i][0].transcript;
             event.results[i].isFinal ? (final += t) : (interim += t);
         }
-
         const current = final || interim;
-        const isFinal = event.results[event.results.length - 1].isFinal;
-
         if (!current.trim()) return;
 
-        // แสดงข้อความต้นฉบับเสมอ
-        showText(sourceText, current);
+        if (sourceText) {
+            sourceText.textContent = current;
+            sourceText.classList.add('show');
+        }
 
-        if (isFinal && final.trim()) {
-            // ยกเลิก request เก่าที่ค้างอยู่
+        if (event.results[event.results.length - 1].isFinal && final.trim()) {
             if (abortController) abortController.abort();
             clearTimeout(hideTimer);
 
-            showText(translatedText, '…');
-
-            const result = await translateWithMyMemory(final);
-            if (result !== null) {
-                showText(translatedText, result);
-                // ซ่อนซับไตเติลหลัง 6 วินาที
-                hideTimer = setTimeout(hideAll, 6000);
+            if (translatedText) {
+                translatedText.textContent = '…';
+                translatedText.classList.add('show');
             }
 
-        } else if (!isFinal) {
-            // ยังพูดไม่จบ — ซ่อนคำแปลเก่าก่อน
-            hideText(translatedText);
+            const result = await translateWithMyMemory(final);
+            if (result && translatedText) {
+                translatedText.textContent = result;
+                hideTimer = setTimeout(() => {
+                    if (sourceText) sourceText.classList.remove('show');
+                    if (translatedText) translatedText.classList.remove('show');
+                }, 6000);
+            }
         }
     };
 
-    // ----------------------------------------------------------------
-    //  Helper: show / hide text
-    // ----------------------------------------------------------------
-    function showText(el, text) {
-        el.textContent = text;
-        el.classList.add('show');
+    async function translateWithMyMemory(text) {
+        const email = localStorage.getItem('claude_api_key') || "";
+        const s = sourceLang ? sourceLang.value.split('-')[0] : 'th';
+        const t = targetLang ? targetLang.value.split('-')[0] : 'en';
+        const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${s}|${t}${email ? '&de=' + email : ''}`;
+
+        abortController = new AbortController();
+        try {
+            const res = await fetch(apiUrl, { signal: abortController.signal });
+            const data = await res.json();
+            return data.responseData.translatedText;
+        } catch (err) { return text; }
     }
 
-    function hideText(el) {
-        el.classList.remove('show');
+    // Load initial data
+    const savedKey = localStorage.getItem('claude_api_key');
+    if (savedKey && apiKeyInput) {
+        apiKeyInput.value = savedKey;
+        if (apiKeyStatus) apiKeyStatus.textContent = '✓ Email loaded';
     }
-
-    function hideAll() {
-        hideText(sourceText);
-        hideText(translatedText);
-    }
-
-    // ----------------------------------------------------------------
-    //  MyMemory API Translation
-    // ----------------------------------------------------------------
-    const LANG_NAMES = { th: 'Thai', en: 'English', zh: 'Chinese (Simplified)' };
-
-
-        async function translateWithMyMemory(text) {
-            // ดึงอีเมลที่บันทึกไว้
-            const email = localStorage.getItem('claude_api_key'); 
-            
-            // ตัดรหัสภาษาให้เหลือแค่ 2 ตัว เช่น th-TH เหลือ th
-            const sLangCode = sourceLang.value.split('-')[0];
-            const tLangCode = targetLang.value.split('-')[0];
-    
-            let apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sLangCode}|${tLangCode}`;
-    
-            if (email && email.includes('@')) {
-                apiUrl += `&de=${encodeURIComponent(email)}`;
-            }
-    
-            abortController = new AbortController();
-    
-            try {
-                const res = await fetch(apiUrl, { signal:
-                  abortController.signal });
-                
-                if (!res.ok) {
-                    console.error('API error:', res.status);
-                    return text; 
-                }
-    
-                const data = await res.json();
-                
-                if (data.responseStatus === 403) {
-                    console.warn("MyMemory Quota Exceeded:",
-                                 data.responseData.translatedText);
-                    return `[โควต้าเต็ม] ${text}`;
-                }
-    
-                return data.responseData.translatedText;
-    
-            } catch (err) {
-                if (err.name === 'AbortError') return null;
-                console.error('Fetch error:', err);
-                return text;
-            } finally {
-                abortController = null;
-            }
-        }
-    
-    });
+});
 
   
   // ----------------------------------------------------------------
